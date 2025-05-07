@@ -1,0 +1,89 @@
+package com.locadora.unoesc.controller;
+
+import com.locadora.unoesc.model.Exemplar;
+import com.locadora.unoesc.model.Filme;
+import com.locadora.unoesc.repository.ExemplarRepository;
+import com.locadora.unoesc.repository.FilmeRepository;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@RestController
+@RequestMapping("/exemplares")
+public class ExemplarController {
+
+    private final ExemplarRepository exemplarRepository;
+    private final FilmeRepository filmeRepository;
+
+    public ExemplarController(ExemplarRepository exemplarRepository, FilmeRepository filmeRepository) {
+        this.exemplarRepository = exemplarRepository;
+        this.filmeRepository = filmeRepository;
+    }
+
+    @GetMapping
+    public List<Exemplar> listar() {
+        return exemplarRepository.findAll();
+    }
+
+    @PostMapping
+    public Exemplar salvar(@RequestBody Exemplar exemplar) {
+        Filme filme = filmeRepository.findById(exemplar.getFilme().getId())
+                .orElseThrow(() -> new RuntimeException("Filme não encontrado"));
+
+        if (!filme.isAtivo()) {
+            throw new RuntimeException("Não é possível adicionar exemplar: o filme está inativo.");
+        }
+
+        exemplar.setDataCadastro(LocalDate.now());
+        exemplar.setFilme(filme);
+
+        Exemplar novoExemplar = exemplarRepository.save(exemplar);
+
+        long totalExemplares = exemplarRepository.countByFilmeAndAtivoTrue(filme);
+        filme.setExemplaresDisponiveis(totalExemplares);
+        filmeRepository.save(filme);
+
+        return novoExemplar;
+    }
+
+    @PutMapping("/{id}/inativar")
+    public Exemplar inativar(@PathVariable Long id) {
+        Exemplar exemplar = exemplarRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Exemplar não encontrado"));
+
+        if (!exemplar.isAtivo()) {
+            throw new RuntimeException("Este exemplar já está inativo.");
+        }
+
+        exemplar.setAtivo(false);
+        exemplarRepository.save(exemplar);
+
+        Filme filme = exemplar.getFilme();
+        long totalExemplaresAtivos = exemplarRepository.countByFilmeAndAtivoTrue(filme);
+        filme.setExemplaresDisponiveis(totalExemplaresAtivos);
+        filmeRepository.save(filme);
+
+        return exemplar;
+    }
+
+    @PutMapping("/{id}/ativar")
+    public Exemplar ativar(@PathVariable Long id) {
+    Exemplar exemplar = exemplarRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Exemplar não encontrado"));
+
+    if (exemplar.isAtivo()) {
+        throw new RuntimeException("Este exemplar já está ativo.");
+    }
+
+    exemplar.setAtivo(true);
+    exemplarRepository.save(exemplar);
+
+    Filme filme = exemplar.getFilme();
+    long totalExemplaresAtivos = exemplarRepository.countByFilmeAndAtivoTrue(filme);
+    filme.setExemplaresDisponiveis(totalExemplaresAtivos);
+    filmeRepository.save(filme);
+
+    return exemplar;
+    }
+}
