@@ -1,6 +1,7 @@
 package com.locadora.unoesc.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 
 @Entity
 public class Filme {
@@ -10,12 +11,19 @@ public class Filme {
     private Long id;
 
     private boolean ativo;
+
+    @Column(name = "exemplares_disponiveis")
     private Long exemplaresDisponiveis;
 
     private String titulo;
+    @Lob
     private String resumo;
     private String pontuacao;
-    private String lancamento;
+
+    @Column(name = "lancamento")
+    private LocalDate lancamento;
+
+    // Getters e Setters
 
     public Long getId() {
         return id;
@@ -65,11 +73,11 @@ public class Filme {
         this.pontuacao = pontuacao;
     }
 
-    public String getLancamento() {
+    public LocalDate getLancamento() {
         return lancamento;
     }
 
-    public void setLancamento(String lancamento) {
+    public void setLancamento(LocalDate lancamento) {
         this.lancamento = lancamento;
     }
 }
