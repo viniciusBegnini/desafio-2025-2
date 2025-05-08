@@ -28,13 +28,11 @@ public class LocacaoController {
         this.filmeRepository = filmeRepository;
     }
 
-    // 1️⃣ Listar locações
     @GetMapping
     public List<Locacao> listar() {
         return locacaoRepository.findAll();
     }
 
-    // 2️⃣ Criar locação
     @PostMapping
     public Locacao criar(@RequestBody Locacao locacao) {
         List<Exemplar> exemplares = locacao.getExemplares();
@@ -47,7 +45,6 @@ public class LocacaoController {
             throw new RuntimeException("Não é permitido selecionar mais de 3 exemplares.");
         }
 
-        // Valida cada exemplar
         for (Exemplar ex : exemplares) {
             Exemplar exemplarBanco = exemplarRepository.findById(ex.getId())
                     .orElseThrow(() -> new RuntimeException("Exemplar com ID " + ex.getId() + " não encontrado."));
@@ -55,22 +52,22 @@ public class LocacaoController {
             if (!exemplarBanco.isAtivo()) {
                 throw new RuntimeException("Exemplar com ID " + ex.getId() + " está inativo.");
             }
+
+            boolean locacaoPendente = locacaoRepository.existsByExemplaresAndDataDevolvidoIsNull(exemplarBanco);
+            if (locacaoPendente) {
+                throw new RuntimeException("Exemplar com ID " + ex.getId() + " já está locado e não foi devolvido.");
+            }
         }
 
-        // Preenche datas automáticas
         locacao.setDataLocacao(LocalDate.now());
-        locacao.setDataDevolucao(locacao.getDataLocacao().plusDays(7)); // Padrão: 7 dias de locação
+        locacao.setDataDevolucao(locacao.getDataLocacao().plusDays(7));
 
-        // Gera o QRCode
         String qrCodeBase64 = gerarQRCode(locacao);
         locacao.setQrCode(qrCodeBase64);
 
-        // Salva a locação
         Locacao novaLocacao = locacaoRepository.save(locacao);
 
-        // Atualiza exemplaresDisponiveis dos filmes
         for (Exemplar ex : exemplares) {
-            // Buscamos o exemplar completo novamente do banco
             Exemplar exemplarCompleto = exemplarRepository.findById(ex.getId())
                     .orElseThrow(() -> new RuntimeException("Exemplar com ID " + ex.getId() + " não encontrado ao atualizar contador."));
 
@@ -88,7 +85,6 @@ public class LocacaoController {
         return novaLocacao;
     }
 
-    // 3️⃣ Devolver locação
     @PutMapping("/{id}/devolver")
     public Locacao devolver(@PathVariable Long id) {
         Locacao locacao = locacaoRepository.findById(id)
@@ -101,7 +97,6 @@ public class LocacaoController {
         locacao.setDataDevolvido(LocalDate.now());
         locacaoRepository.save(locacao);
 
-        // Atualiza exemplaresDisponiveis dos filmes
         for (Exemplar ex : locacao.getExemplares()) {
             Exemplar exemplarCompleto = exemplarRepository.findById(ex.getId())
                     .orElseThrow(() -> new RuntimeException("Exemplar com ID " + ex.getId() + " não encontrado ao atualizar contador."));
@@ -116,32 +111,36 @@ public class LocacaoController {
         return locacao;
     }
 
-    // 🔧 Método para gerar QRCode (GET com parâmetros)
     private String gerarQRCode(Locacao locacao) {
         try {
             RestTemplate restTemplate = new RestTemplate();
-    
+
             String dados = "CPF: " + locacao.getCpf()
                     + ", Telefone: " + locacao.getTelefone()
                     + ", Data Locacao: " + locacao.getDataLocacao()
                     + ", Data Devolucao: " + locacao.getDataDevolucao();
-    
+
             String url = "https://api.apgy.in/qr/"
                     + "?data=" + java.net.URLEncoder.encode(dados, java.nio.charset.StandardCharsets.UTF_8)
                     + "&size=300";
-    
+
             ResponseEntity<byte[]> response = restTemplate.getForEntity(url, byte[].class);
-    
+
             if (response.getStatusCode() == HttpStatus.OK) {
                 byte[] qrImage = response.getBody();
                 return Base64.getEncoder().encodeToString(qrImage);
             } else {
                 throw new RuntimeException("Erro ao gerar QRCode: " + response.getStatusCode());
             }
-    
+
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Falha ao gerar QRCode: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/consultar-locacao/{cpf}")
+    public List<Locacao> consultarLocacaoPorCpf(@PathVariable String cpf) {
+        return locacaoRepository.findByCpfAndDataDevolvidoIsNull(cpf);
     }
 }
