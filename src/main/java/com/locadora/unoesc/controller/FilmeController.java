@@ -4,10 +4,10 @@ import com.locadora.unoesc.model.Filme;
 import com.locadora.unoesc.repository.FilmeRepository;
 import com.locadora.unoesc.service.TMDBService;
 import com.locadora.unoesc.service.TMDBService.TMDBFilmeDTO;
-
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/filmes")
@@ -16,35 +16,51 @@ public class FilmeController {
     private final FilmeRepository filmeRepository;
     private final TMDBService tmdbService;
 
-    // Construtor com injeção de dependência
     public FilmeController(FilmeRepository filmeRepository, TMDBService tmdbService) {
         this.filmeRepository = filmeRepository;
         this.tmdbService = tmdbService;
     }
 
-    // Listar filmes
     @GetMapping
     public List<Filme> listar() {
         return filmeRepository.findAll();
     }
 
-    // Cadastrar novo filme com dados vindos da API
     @PostMapping
     public Filme salvar(@RequestBody Filme filme) {
-        
-        TMDBFilmeDTO dados = tmdbService.buscarFilmeAleatorio();
+        TMDBFilmeDTO dados = null;
+        Optional<Filme> existente = Optional.empty();
+        int tentativas = 0;
 
-        if (dados != null) {
-            filme.setTitulo(dados.titulo);
-            filme.setResumo(dados.resumo);
-            filme.setPontuacao(dados.pontuacao);
-            filme.setLancamento(dados.lancamento);
+        while (tentativas < 10) {
+            dados = tmdbService.buscarFilmeAleatorio();
+
+            if (dados != null) {
+                existente = filmeRepository.findByTituloIgnoreCase(dados.titulo);
+                if (existente.isEmpty()) {
+                    break;
+                }
+            }
+            tentativas++;
         }
 
-        return filmeRepository.save(filme);
+        if (dados == null) {
+            throw new RuntimeException("Falha ao buscar filme da API.");
+        }
+
+        if (existente.isPresent()) {
+            throw new RuntimeException("Não foi possível encontrar um filme único após várias tentativas.");
+        }
+
+        filme.setTitulo(dados.titulo);
+        filme.setResumo(dados.resumo);
+        filme.setPontuacao(dados.pontuacao);
+        filme.setLancamento(dados.lancamento);
+
+        Filme novoFilme = filmeRepository.save(filme);
+        return novoFilme;
     }
 
-    // Buscar filme por ID
     @GetMapping("/{id}")
     public Filme buscarPorId(@PathVariable Long id) {
         return filmeRepository.findById(id)
