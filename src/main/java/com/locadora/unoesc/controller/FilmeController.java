@@ -32,7 +32,7 @@ public class FilmeController {
         Optional<Filme> existente = Optional.empty();
         int tentativas = 0;
 
-        while (tentativas < 10) {
+        while (tentativas < 50) {
             dados = tmdbService.buscarFilmeAleatorio();
 
             if (dados != null) {

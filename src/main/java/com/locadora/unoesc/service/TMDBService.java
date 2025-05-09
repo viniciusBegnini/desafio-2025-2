@@ -23,8 +23,8 @@ public class TMDBService {
             RestTemplate restTemplate = new RestTemplate();
             ObjectMapper mapper = new ObjectMapper();
 
-            int paginaAleatoria = (int) (Math.random() * 10 + 1);
-            String url = baseUrl + "/movie/popular?language=pt-BR&page=" + paginaAleatoria;
+            int paginaAleatoria = (int) (Math.random() * 500 + 1);
+            String url = baseUrl + "/discover/movie?language=pt-BR&sort_by=popularity.desc&page=" + paginaAleatoria;
 
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", "Bearer " + apiKey);
@@ -35,18 +35,45 @@ public class TMDBService {
 
             JsonNode json = mapper.readTree(response.getBody());
 
-            JsonNode filme = json.get("results").get(0);
+            JsonNode results = json.get("results");
+            int totalFilmesNaPagina = results.size();
+            if (totalFilmesNaPagina == 0) {
+                return null;
+            }
+
+            int indiceAleatorio = (int) (Math.random() * totalFilmesNaPagina);
+            JsonNode filme = results.get(indiceAleatorio);
 
             LocalDate dataLancamento = null;
             if (filme.has("release_date") && !filme.get("release_date").asText().isEmpty()) {
                 dataLancamento = LocalDate.parse(filme.get("release_date").asText());
             }
 
-            System.out.println("Filme buscado: " + filme.get("title").asText());
+            String titulo = filme.get("title").asText();
+            String resumo = filme.has("overview") ? filme.get("overview").asText() : "";
+
+            if (resumo == null || resumo.trim().isEmpty()) {
+                System.out.println("Resumo vazio em pt-BR, tentando buscar em inglês...");
+
+                int filmeId = filme.get("id").asInt();
+                String urlIngles = baseUrl + "/movie/" + filmeId + "?language=en-US";
+
+                ResponseEntity<String> responseIngles = restTemplate.exchange(urlIngles, HttpMethod.GET, entity, String.class);
+                JsonNode jsonIngles = mapper.readTree(responseIngles.getBody());
+
+                resumo = jsonIngles.has("overview") ? jsonIngles.get("overview").asText() : "";
+            }
+
+            if (resumo == null || resumo.trim().isEmpty()) {
+                System.out.println("Filme sem resumo mesmo em inglês, pulando: " + titulo);
+                return null;
+            }
+
+            System.out.println("Filme buscado: " + titulo);
 
             return new TMDBFilmeDTO(
-                filme.get("title").asText(),
-                filme.get("overview").asText(),
+                titulo,
+                resumo,
                 String.valueOf(filme.get("vote_average").asDouble()),
                 dataLancamento
             );

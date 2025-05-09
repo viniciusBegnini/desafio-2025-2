@@ -9,5 +9,4 @@ public class UnoescApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(UnoescApplication.class, args);
 	}
-
 }
