@@ -4,7 +4,9 @@ import com.locadora.unoesc.model.Exemplar;
 import com.locadora.unoesc.model.Filme;
 import com.locadora.unoesc.repository.ExemplarRepository;
 import com.locadora.unoesc.repository.FilmeRepository;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -22,12 +24,19 @@ public class ExemplarController {
     }
 
     @GetMapping
-    public List<Exemplar> listar() {
+    public Object listar(HttpSession session) {
+        if (session.getAttribute("usuarioLogado") == null) {
+            return new ModelAndView("redirect:/login");
+        }
         return exemplarRepository.findAll();
     }
 
     @PostMapping
-    public Exemplar salvar(@RequestBody Exemplar exemplar) {
+    public Object salvar(@RequestBody Exemplar exemplar, HttpSession session) {
+        if (session.getAttribute("usuarioLogado") == null) {
+            return new ModelAndView("redirect:/login");
+        }
+
         Filme filme = filmeRepository.findById(exemplar.getFilme().getId())
                 .orElseThrow(() -> new RuntimeException("Filme não encontrado"));
 
@@ -48,7 +57,11 @@ public class ExemplarController {
     }
 
     @PutMapping("/{id}/inativar")
-    public Exemplar inativar(@PathVariable Long id) {
+    public Object inativar(@PathVariable Long id, HttpSession session) {
+        if (session.getAttribute("usuarioLogado") == null) {
+            return new ModelAndView("redirect:/login");
+        }
+
         Exemplar exemplar = exemplarRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Exemplar não encontrado"));
 
@@ -68,22 +81,26 @@ public class ExemplarController {
     }
 
     @PutMapping("/{id}/ativar")
-    public Exemplar ativar(@PathVariable Long id) {
-    Exemplar exemplar = exemplarRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Exemplar não encontrado"));
+    public Object ativar(@PathVariable Long id, HttpSession session) {
+        if (session.getAttribute("usuarioLogado") == null) {
+            return new ModelAndView("redirect:/login");
+        }
 
-    if (exemplar.isAtivo()) {
-        throw new RuntimeException("Este exemplar já está ativo.");
-    }
+        Exemplar exemplar = exemplarRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Exemplar não encontrado"));
 
-    exemplar.setAtivo(true);
-    exemplarRepository.save(exemplar);
+        if (exemplar.isAtivo()) {
+            throw new RuntimeException("Este exemplar já está ativo.");
+        }
 
-    Filme filme = exemplar.getFilme();
-    long totalExemplaresAtivos = exemplarRepository.countByFilmeAndAtivoTrue(filme);
-    filme.setExemplaresDisponiveis(totalExemplaresAtivos);
-    filmeRepository.save(filme);
+        exemplar.setAtivo(true);
+        exemplarRepository.save(exemplar);
 
-    return exemplar;
+        Filme filme = exemplar.getFilme();
+        long totalExemplaresAtivos = exemplarRepository.countByFilmeAndAtivoTrue(filme);
+        filme.setExemplaresDisponiveis(totalExemplaresAtivos);
+        filmeRepository.save(filme);
+
+        return exemplar;
     }
 }

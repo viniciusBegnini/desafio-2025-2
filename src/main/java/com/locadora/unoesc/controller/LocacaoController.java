@@ -6,10 +6,15 @@ import com.locadora.unoesc.model.Locacao;
 import com.locadora.unoesc.repository.ExemplarRepository;
 import com.locadora.unoesc.repository.FilmeRepository;
 import com.locadora.unoesc.repository.LocacaoRepository;
-import org.springframework.http.*;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.ModelAndView;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
@@ -22,19 +27,28 @@ public class LocacaoController {
     private final ExemplarRepository exemplarRepository;
     private final FilmeRepository filmeRepository;
 
-    public LocacaoController(LocacaoRepository locacaoRepository, ExemplarRepository exemplarRepository, FilmeRepository filmeRepository) {
+    public LocacaoController(LocacaoRepository locacaoRepository,
+                             ExemplarRepository exemplarRepository,
+                             FilmeRepository filmeRepository) {
         this.locacaoRepository = locacaoRepository;
         this.exemplarRepository = exemplarRepository;
         this.filmeRepository = filmeRepository;
     }
 
     @GetMapping
-    public List<Locacao> listar() {
+    public Object listar(HttpSession session) {
+        if (session.getAttribute("usuarioLogado") == null) {
+            return new ModelAndView("redirect:/login");
+        }
         return locacaoRepository.findAll();
     }
 
     @PostMapping
-    public Locacao criar(@RequestBody Locacao locacao) {
+    public Object criar(@RequestBody Locacao locacao, HttpSession session) {
+        if (session.getAttribute("usuarioLogado") == null) {
+            return new ModelAndView("redirect:/login");
+        }
+
         List<Exemplar> exemplares = locacao.getExemplares();
 
         if (exemplares == null || exemplares.isEmpty()) {
@@ -51,11 +65,6 @@ public class LocacaoController {
 
             if (!exemplarBanco.isAtivo()) {
                 throw new RuntimeException("Exemplar com ID " + ex.getId() + " está inativo.");
-            }
-
-            boolean locacaoPendente = locacaoRepository.existsByExemplaresAndDataDevolvidoIsNull(exemplarBanco);
-            if (locacaoPendente) {
-                throw new RuntimeException("Exemplar com ID " + ex.getId() + " já está locado e não foi devolvido.");
             }
         }
 
@@ -77,8 +86,6 @@ public class LocacaoController {
                 long totalAtivos = exemplarRepository.countByFilmeAndAtivoTrue(filme);
                 filme.setExemplaresDisponiveis(totalAtivos - 1);
                 filmeRepository.save(filme);
-            } else {
-                throw new RuntimeException("Exemplar ID " + ex.getId() + " não está associado a nenhum filme.");
             }
         }
 
@@ -86,7 +93,11 @@ public class LocacaoController {
     }
 
     @PutMapping("/{id}/devolver")
-    public Locacao devolver(@PathVariable Long id) {
+    public Object devolver(@PathVariable Long id, HttpSession session) {
+        if (session.getAttribute("usuarioLogado") == null) {
+            return new ModelAndView("redirect:/login");
+        }
+
         Locacao locacao = locacaoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Locação não encontrada."));
 
@@ -114,14 +125,13 @@ public class LocacaoController {
     private String gerarQRCode(Locacao locacao) {
         try {
             RestTemplate restTemplate = new RestTemplate();
-
             String dados = "CPF: " + locacao.getCpf()
                     + ", Telefone: " + locacao.getTelefone()
                     + ", Data Locacao: " + locacao.getDataLocacao()
                     + ", Data Devolucao: " + locacao.getDataDevolucao();
 
             String url = "https://api.apgy.in/qr/"
-                    + "?data=" + java.net.URLEncoder.encode(dados, java.nio.charset.StandardCharsets.UTF_8)
+                    + "?data=" + URLEncoder.encode(dados, StandardCharsets.UTF_8)
                     + "&size=300";
 
             ResponseEntity<byte[]> response = restTemplate.getForEntity(url, byte[].class);
@@ -139,8 +149,11 @@ public class LocacaoController {
         }
     }
 
-    @GetMapping("/consultar-locacao/{cpf}")
+       @GetMapping("/consultar-locacao/{cpf}")
     public List<Locacao> consultarLocacaoPorCpf(@PathVariable String cpf) {
+        if (cpf == null || cpf.length() < 11) {
+            throw new RuntimeException("CPF inválido.");
+        }
         return locacaoRepository.findByCpfAndDataDevolvidoIsNull(cpf);
     }
 }

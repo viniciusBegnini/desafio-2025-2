@@ -4,7 +4,9 @@ import com.locadora.unoesc.model.Filme;
 import com.locadora.unoesc.repository.FilmeRepository;
 import com.locadora.unoesc.service.TMDBService;
 import com.locadora.unoesc.service.TMDBService.TMDBFilmeDTO;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,17 +24,24 @@ public class FilmeController {
     }
 
     @GetMapping
-    public List<Filme> listar() {
+    public Object listar(HttpSession session) {
+        if (session.getAttribute("usuarioLogado") == null) {
+            return new ModelAndView("redirect:/login");
+        }
         return filmeRepository.findAll();
     }
 
     @PostMapping
-    public Filme salvar(@RequestBody Filme filme) {
+    public Object salvar(@RequestBody Filme filme, HttpSession session) {
+        if (session.getAttribute("usuarioLogado") == null) {
+            return new ModelAndView("redirect:/login");
+        }
+
         TMDBFilmeDTO dados = null;
         Optional<Filme> existente = Optional.empty();
         int tentativas = 0;
 
-        while (tentativas < 50) {
+        while (tentativas < 10) {
             dados = tmdbService.buscarFilmeAleatorio();
 
             if (dados != null) {
@@ -57,12 +66,15 @@ public class FilmeController {
         filme.setPontuacao(dados.pontuacao);
         filme.setLancamento(dados.lancamento);
 
-        Filme novoFilme = filmeRepository.save(filme);
-        return novoFilme;
+        return filmeRepository.save(filme);
     }
 
     @GetMapping("/{id}")
-    public Filme buscarPorId(@PathVariable Long id) {
+    public Object buscarPorId(@PathVariable Long id, HttpSession session) {
+        if (session.getAttribute("usuarioLogado") == null) {
+            return new ModelAndView("redirect:/login");
+        }
+
         return filmeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Filme não encontrado"));
     }
