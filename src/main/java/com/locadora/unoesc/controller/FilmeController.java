@@ -30,43 +30,58 @@ public class FilmeController {
         return filmeRepository.findAll();
     }
 
+    @GetMapping("/cadastrar")
+    public ModelAndView exibirFormulario(HttpSession session) {
+        if (session.getAttribute("usuarioLogado") == null) {
+            return new ModelAndView("redirect:/login");
+        }
+        return new ModelAndView("cadastroFilmes");
+    }
+
+    @GetMapping("/listar")
+    public ModelAndView listarFilmesPage(HttpSession session) {
+        if (session.getAttribute("usuarioLogado") == null) {
+            return new ModelAndView("redirect:/login");
+        }
+        ModelAndView mv = new ModelAndView("filmes");
+        mv.addObject("filmes", filmeRepository.findAll());
+        return mv;
+    }
+
+    // 🔁 Novo: Salva o filme exibido no formulário, sem nova busca
     @PostMapping
     public Object salvar(@RequestBody Filme filme, HttpSession session) {
         if (session.getAttribute("usuarioLogado") == null) {
             return new ModelAndView("redirect:/login");
         }
 
+        Optional<Filme> existente = filmeRepository.findByTituloIgnoreCase(filme.getTitulo());
+        if (existente.isPresent()) {
+            throw new RuntimeException("Já existe um filme cadastrado com este título.");
+        }
+
+        return filmeRepository.save(filme);
+    }
+
+    // 🔄 Busca filme aleatório para exibir no formulário
+    @GetMapping("/aleatorio")
+    public Object buscarFilmeAleatorio(HttpSession session) {
+        if (session.getAttribute("usuarioLogado") == null) {
+            return new ModelAndView("redirect:/login");
+        }
+
         TMDBFilmeDTO dados = null;
-        Optional<Filme> existente = Optional.empty();
         int tentativas = 0;
 
         while (tentativas < 10) {
             dados = tmdbService.buscarFilmeAleatorio();
-
-            if (dados != null) {
-                existente = filmeRepository.findByTituloIgnoreCase(dados.titulo);
-                if (existente.isEmpty()) {
-                    break;
-                }
+            if (dados != null && filmeRepository.findByTituloIgnoreCase(dados.titulo).isEmpty()) {
+                return dados;
             }
             tentativas++;
         }
 
-        if (dados == null) {
-            throw new RuntimeException("Falha ao buscar filme da API.");
-        }
-
-        if (existente.isPresent()) {
-            throw new RuntimeException("Não foi possível encontrar um filme único após várias tentativas.");
-        }
-
-        filme.setTitulo(dados.titulo);
-        filme.setResumo(dados.resumo);
-        filme.setPontuacao(dados.pontuacao);
-        filme.setLancamento(dados.lancamento);
-        filme.setPosterPath(dados.posterPath); // ✅ Adicionando a imagem
-
-        return filmeRepository.save(filme);
+        throw new RuntimeException("Não foi possível encontrar um filme único após várias tentativas.");
     }
 
     @GetMapping("/{id}")

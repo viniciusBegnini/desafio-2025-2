@@ -28,8 +28,8 @@ public class LocacaoController {
     private final FilmeRepository filmeRepository;
 
     public LocacaoController(LocacaoRepository locacaoRepository,
-                             ExemplarRepository exemplarRepository,
-                             FilmeRepository filmeRepository) {
+            ExemplarRepository exemplarRepository,
+            FilmeRepository filmeRepository) {
         this.locacaoRepository = locacaoRepository;
         this.exemplarRepository = exemplarRepository;
         this.filmeRepository = filmeRepository;
@@ -78,7 +78,8 @@ public class LocacaoController {
 
         for (Exemplar ex : exemplares) {
             Exemplar exemplarCompleto = exemplarRepository.findById(ex.getId())
-                    .orElseThrow(() -> new RuntimeException("Exemplar com ID " + ex.getId() + " não encontrado ao atualizar contador."));
+                    .orElseThrow(() -> new RuntimeException(
+                            "Exemplar com ID " + ex.getId() + " não encontrado ao atualizar contador."));
 
             Filme filme = exemplarCompleto.getFilme();
 
@@ -110,7 +111,8 @@ public class LocacaoController {
 
         for (Exemplar ex : locacao.getExemplares()) {
             Exemplar exemplarCompleto = exemplarRepository.findById(ex.getId())
-                    .orElseThrow(() -> new RuntimeException("Exemplar com ID " + ex.getId() + " não encontrado ao atualizar contador."));
+                    .orElseThrow(() -> new RuntimeException(
+                            "Exemplar com ID " + ex.getId() + " não encontrado ao atualizar contador."));
             Filme filme = exemplarCompleto.getFilme();
             if (filme != null) {
                 long totalAtivos = exemplarRepository.countByFilmeAndAtivoTrue(filme);
@@ -149,7 +151,7 @@ public class LocacaoController {
         }
     }
 
-       @GetMapping("/consultar-locacao/{cpf}")
+    @GetMapping("/consultar-locacao/{cpf}")
     public List<Locacao> consultarLocacaoPorCpf(@PathVariable String cpf) {
         if (cpf == null || cpf.length() < 11) {
             throw new RuntimeException("CPF inválido.");

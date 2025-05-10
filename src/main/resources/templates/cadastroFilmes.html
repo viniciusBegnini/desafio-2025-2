@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastrar Filme</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #poster-preview {
+            max-height: 300px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+    <div class="container py-5">
+        <h2 class="mb-4">Cadastrar Filme Manualmente</h2>
+
+        <div class="mb-3">
+            <button id="buscarFilme" class="btn btn-info">Buscar Filme Aleatório</button>
+        </div>
+
+        <form id="formCadastrar">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label>Título:</label>
+                    <input type="text" class="form-control" id="titulo" disabled>
+                </div>
+                <div class="col-md-3">
+                    <label>Pontuação:</label>
+                    <input type="text" class="form-control" id="pontuacao" disabled>
+                </div>
+                <div class="col-md-3">
+                    <label>Lançamento:</label>
+                    <input type="text" class="form-control" id="lancamento" disabled>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label>Resumo:</label>
+                <textarea class="form-control" id="resumo" rows="3" disabled></textarea>
+            </div>
+
+            <div id="poster" class="mb-4 text-center"></div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label>Ativo:</label>
+                    <select class="form-control" id="ativo" required>
+                        <option value="true">Sim</option>
+                        <option value="false">Não</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label>Exemplares Disponíveis:</label>
+                    <input type="number" class="form-control" id="exemplares" placeholder="Opcional">
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-block">
+                <button type="submit" class="btn btn-primary">Cadastrar Filme</button>
+                <a href="/home" class="btn btn-secondary">Voltar</a>
+            </div>
+        </form>
+
+        <div id="mensagem" class="mt-4"></div>
+    </div>
+
+    <script>
+        let filmeDados = null;
+
+        document.getElementById("buscarFilme").addEventListener("click", function () {
+            fetch("/filmes/aleatorio")
+                .then(response => {
+                    if (!response.ok) throw new Error("Erro ao buscar filme");
+                    return response.json();
+                })
+                .then(data => {
+                    filmeDados = data;
+
+                    document.getElementById("titulo").value = data.titulo;
+                    document.getElementById("pontuacao").value = data.pontuacao;
+                    document.getElementById("lancamento").value = data.lancamento;
+                    document.getElementById("resumo").value = data.resumo;
+
+                    const poster = data.posterPath
+                        ? `<img id="poster-preview" src="https://image.tmdb.org/t/p/w300${data.posterPath}" class="img-fluid rounded">`
+                        : `<p class="text-muted">Sem imagem disponível.</p>`;
+                    document.getElementById("poster").innerHTML = poster;
+                })
+                .catch(err => {
+                    document.getElementById("mensagem").innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+                });
+        });
+
+        document.getElementById("formCadastrar").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            if (!filmeDados) {
+                alert("Busque um filme antes de cadastrar.");
+                return;
+            }
+
+            const filmeParaSalvar = {
+                titulo: filmeDados.titulo,
+                resumo: filmeDados.resumo,
+                pontuacao: filmeDados.pontuacao,
+                lancamento: filmeDados.lancamento,
+                posterPath: filmeDados.posterPath,
+                ativo: document.getElementById("ativo").value === "true",
+                exemplaresDisponiveis: document.getElementById("exemplares").value || null
+            };
+
+            fetch("/filmes", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(filmeParaSalvar)
+            })
+                .then(res => {
+                    if (!res.ok) return res.text().then(txt => { throw new Error(txt); });
+                    return res.json();
+                })
+                .then(data => {
+                    document.getElementById("mensagem").innerHTML = `<div class="alert alert-success">Filme <strong>${data.titulo}</strong> cadastrado com sucesso!</div>`;
+                })
+                .catch(error => {
+                    document.getElementById("mensagem").innerHTML = `<div class="alert alert-danger">Erro: ${error.message}</div>`;
+                });
+        });
+    </script>
+
+</body>
+
+</html>

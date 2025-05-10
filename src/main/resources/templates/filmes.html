@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Filmes Cadastrados</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <div class="container mt-4">
+        <h2 class="mb-4 text-center">Filmes Cadastrados</h2>
+        <div class="row" th:if="${filmes != null}">
+            <div class="col-md-3 mb-4" th:each="filme : ${filmes}">
+                <div class="card h-100 shadow-sm">
+                    <img th:if="${filme.posterPath != null}"
+                        th:src="@{'https://image.tmdb.org/t/p/w200/' + ${filme.posterPath}}"
+                        class="card-img-top img-fluid" style="height: 300px; object-fit: contain;"
+                        alt="Poster do filme">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title" th:text="${filme.titulo}">Título</h5>
+                        <p class="card-text small mb-1 text-muted" th:text="'Nota: ' + ${filme.pontuacao}"></p>
+                        <p class="card-text small mb-1 text-muted"
+                            th:text="'Lançamento: ' + ${#temporals.format(filme.lancamento, 'dd/MM/yyyy')}"></p>
+                        <p class="card-text small mb-1">
+                            <strong>Status:</strong>
+                            <span th:text="${filme.ativo} ? 'Ativo' : 'Inativo'"></span>
+                        </p>
+                        <p class="card-text small mb-1">
+                            <strong>Exemplares:</strong>
+                            <span
+                                th:text="${filme.exemplaresDisponiveis != null ? filme.exemplaresDisponiveis : '0'}"></span>
+                        </p>
+                        <p class="card-text small" th:text="${filme.resumo}"></p>
+                        <a th:href="@{'/filmes/editar/' + ${filme.id}}"
+                            class="btn btn-sm btn-outline-primary mt-auto">Editar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${filmes == null}">
+            <p class="text-center text-danger">Nenhum filme encontrado.</p>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="/home" class="btn btn-secondary">Voltar</a>
+        </div>
+    </div>
+
+</body>
+
+</html>
