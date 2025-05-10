@@ -48,7 +48,6 @@ public class FilmeController {
         return mv;
     }
 
-    // 🔁 Novo: Salva o filme exibido no formulário, sem nova busca
     @PostMapping
     public Object salvar(@RequestBody Filme filme, HttpSession session) {
         if (session.getAttribute("usuarioLogado") == null) {
@@ -63,7 +62,6 @@ public class FilmeController {
         return filmeRepository.save(filme);
     }
 
-    // 🔄 Busca filme aleatório para exibir no formulário
     @GetMapping("/aleatorio")
     public Object buscarFilmeAleatorio(HttpSession session) {
         if (session.getAttribute("usuarioLogado") == null) {
@@ -84,13 +82,36 @@ public class FilmeController {
         throw new RuntimeException("Não foi possível encontrar um filme único após várias tentativas.");
     }
 
-    @GetMapping("/{id}")
-    public Object buscarPorId(@PathVariable Long id, HttpSession session) {
+    @GetMapping("/editar/{id}")
+    public ModelAndView exibirFormularioEdicao(@PathVariable Long id, HttpSession session) {
         if (session.getAttribute("usuarioLogado") == null) {
             return new ModelAndView("redirect:/login");
         }
 
-        return filmeRepository.findById(id)
+        Filme filme = filmeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Filme não encontrado"));
+
+        ModelAndView mv = new ModelAndView("editarFilme");
+        mv.addObject("filme", filme);
+        return mv;
+    }
+
+    @PostMapping("/editar/{id}")
+    public ModelAndView salvarEdicao(@PathVariable Long id,
+            @RequestParam boolean ativo,
+            @RequestParam(required = false) Long exemplaresDisponiveis,
+            HttpSession session) {
+        if (session.getAttribute("usuarioLogado") == null) {
+            return new ModelAndView("redirect:/login");
+        }
+
+        Filme filme = filmeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Filme não encontrado"));
+
+        filme.setAtivo(ativo);
+        filme.setExemplaresDisponiveis(exemplaresDisponiveis);
+
+        filmeRepository.save(filme);
+        return new ModelAndView("redirect:/filmes/listar");
     }
 }
