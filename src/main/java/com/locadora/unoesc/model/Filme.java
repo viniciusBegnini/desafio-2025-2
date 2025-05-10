@@ -16,12 +16,17 @@ public class Filme {
     private Long exemplaresDisponiveis;
 
     private String titulo;
+
     @Lob
     private String resumo;
+
     private String pontuacao;
 
     @Column(name = "lancamento")
     private LocalDate lancamento;
+
+    @Column(name = "poster_path")
+    private String posterPath;
 
     // Getters e Setters
 
@@ -79,5 +84,13 @@ public class Filme {
 
     public void setLancamento(LocalDate lancamento) {
         this.lancamento = lancamento;
+    }
+
+    public String getPosterPath() {
+        return posterPath;
+    }
+
+    public void setPosterPath(String posterPath) {
+        this.posterPath = posterPath;
     }
 }

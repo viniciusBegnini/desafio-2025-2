@@ -20,7 +20,7 @@ public class LoginController {
                                HttpSession session) {
         if ("admin".equals(username) && "admin".equals(password)) {
             session.setAttribute("usuarioLogado", true);
-            return "redirect:/filmes";
+            return "redirect:/home";
         } else {
             return "redirect:/login?error=true";
         }
@@ -30,5 +30,13 @@ public class LoginController {
     public String logout(HttpSession session) {
         session.invalidate();
         return "redirect:/login";
+    }
+
+    @GetMapping("/home")
+    public String home(HttpSession session) {
+        if (session.getAttribute("usuarioLogado") == null) {
+            return "redirect:/login";
+        }
+        return "home";
     }
 }

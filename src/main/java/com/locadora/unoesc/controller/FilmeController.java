@@ -8,7 +8,6 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
-import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -65,6 +64,7 @@ public class FilmeController {
         filme.setResumo(dados.resumo);
         filme.setPontuacao(dados.pontuacao);
         filme.setLancamento(dados.lancamento);
+        filme.setPosterPath(dados.posterPath); // ✅ Adicionando a imagem
 
         return filmeRepository.save(filme);
     }

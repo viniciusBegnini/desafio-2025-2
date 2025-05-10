@@ -48,6 +48,10 @@ public class TMDBService {
             if (filme.has("release_date") && !filme.get("release_date").asText().isEmpty()) {
                 dataLancamento = LocalDate.parse(filme.get("release_date").asText());
             }
+            
+            String posterPath = filme.has("poster_path") && !filme.get("poster_path").isNull()
+                ? filme.get("poster_path").asText()
+                : null;
 
             String titulo = filme.get("title").asText();
             String resumo = filme.has("overview") ? filme.get("overview").asText() : "";
@@ -75,7 +79,8 @@ public class TMDBService {
                 titulo,
                 resumo,
                 String.valueOf(filme.get("vote_average").asDouble()),
-                dataLancamento
+                dataLancamento,
+                posterPath
             );
 
         } catch (Exception e) {
@@ -90,12 +95,15 @@ public class TMDBService {
         public String resumo;
         public String pontuacao;
         public LocalDate lancamento;
+        public String posterPath;
 
-        public TMDBFilmeDTO(String titulo, String resumo, String pontuacao, LocalDate lancamento) {
+        public TMDBFilmeDTO(String titulo, String resumo, String pontuacao, LocalDate lancamento, String posterPath) {
             this.titulo = titulo;
             this.resumo = resumo;
             this.pontuacao = pontuacao;
             this.lancamento = lancamento;
-        }
+            this.posterPath = posterPath;
     }
+    }
+
 }
