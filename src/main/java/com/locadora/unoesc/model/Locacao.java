@@ -12,11 +12,7 @@ public class Locacao {
     private Long id;
 
     @ManyToMany
-    @JoinTable(
-        name = "locacao_exemplar",
-        joinColumns = @JoinColumn(name = "locacao_id"),
-        inverseJoinColumns = @JoinColumn(name = "exemplar_id")
-    )
+    @JoinTable(name = "locacao_exemplar", joinColumns = @JoinColumn(name = "locacao_id"), inverseJoinColumns = @JoinColumn(name = "exemplar_id"))
     private List<Exemplar> exemplares;
 
     private String nome;

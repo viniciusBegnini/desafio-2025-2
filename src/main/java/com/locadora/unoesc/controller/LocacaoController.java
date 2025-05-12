@@ -43,54 +43,75 @@ public class LocacaoController {
         return locacaoRepository.findAll();
     }
 
-    @PostMapping
-    public Object criar(@RequestBody Locacao locacao, HttpSession session) {
+    @GetMapping("/cadastrar")
+    public ModelAndView exibirFormularioLocacao(HttpSession session) {
         if (session.getAttribute("usuarioLogado") == null) {
             return new ModelAndView("redirect:/login");
         }
 
-        List<Exemplar> exemplares = locacao.getExemplares();
+        ModelAndView mv = new ModelAndView("cadastroLocacao");
+        mv.addObject("exemplares", exemplarRepository.findByAtivoTrue());
+        return mv;
+    }
 
-        if (exemplares == null || exemplares.isEmpty()) {
-            throw new RuntimeException("É necessário selecionar pelo menos 1 exemplar.");
+    @PostMapping
+    public Object salvarFormulario(
+            @RequestParam String nome,
+            @RequestParam String cpf,
+            @RequestParam String email,
+            @RequestParam String telefone,
+            @RequestParam("exemplares") List<Long> exemplaresIds,
+            @RequestParam("dataDevolucao") String dataDevolucaoStr,
+            HttpSession session) {
+
+        if (session.getAttribute("usuarioLogado") == null) {
+            return new ModelAndView("redirect:/login");
         }
 
-        if (exemplares.size() > 3) {
-            throw new RuntimeException("Não é permitido selecionar mais de 3 exemplares.");
+        if (exemplaresIds.size() < 1 || exemplaresIds.size() > 3) {
+            throw new RuntimeException("Você deve selecionar entre 1 e 3 exemplares.");
         }
+
+        List<Exemplar> exemplares = exemplarRepository.findAllById(exemplaresIds);
 
         for (Exemplar ex : exemplares) {
-            Exemplar exemplarBanco = exemplarRepository.findById(ex.getId())
-                    .orElseThrow(() -> new RuntimeException("Exemplar com ID " + ex.getId() + " não encontrado."));
-
-            if (!exemplarBanco.isAtivo()) {
-                throw new RuntimeException("Exemplar com ID " + ex.getId() + " está inativo.");
+            if (!ex.isAtivo()) {
+                throw new RuntimeException("Exemplar ID " + ex.getId() + " está inativo.");
             }
         }
 
+        Locacao locacao = new Locacao();
+        locacao.setNome(nome);
+        locacao.setCpf(cpf);
+        locacao.setEmail(email);
+        locacao.setTelefone(telefone);
         locacao.setDataLocacao(LocalDate.now());
-        locacao.setDataDevolucao(locacao.getDataLocacao().plusDays(7));
+        locacao.setExemplares(exemplares);
+
+        LocalDate dataDevolucao = LocalDate.parse(dataDevolucaoStr);
+        if (dataDevolucao.isBefore(LocalDate.now())) {
+            throw new RuntimeException("A data de devolução não pode ser anterior à data de hoje.");
+        }
+        locacao.setDataDevolucao(dataDevolucao);
 
         String qrCodeBase64 = gerarQRCode(locacao);
         locacao.setQrCode(qrCodeBase64);
 
-        Locacao novaLocacao = locacaoRepository.save(locacao);
+        locacaoRepository.save(locacao);
 
         for (Exemplar ex : exemplares) {
-            Exemplar exemplarCompleto = exemplarRepository.findById(ex.getId())
-                    .orElseThrow(() -> new RuntimeException(
-                            "Exemplar com ID " + ex.getId() + " não encontrado ao atualizar contador."));
-
-            Filme filme = exemplarCompleto.getFilme();
-
+            Filme filme = ex.getFilme();
             if (filme != null) {
-                long totalAtivos = exemplarRepository.countByFilmeAndAtivoTrue(filme);
-                filme.setExemplaresDisponiveis(totalAtivos - 1);
+                long ativos = exemplarRepository.countByFilmeAndAtivoTrue(filme);
+                filme.setExemplaresDisponiveis(ativos - 1);
                 filmeRepository.save(filme);
             }
         }
 
-        return novaLocacao;
+        ModelAndView mv = new ModelAndView("locacaoSucesso");
+        mv.addObject("qrCode", locacao.getQrCode());
+        return mv;
+
     }
 
     @PutMapping("/{id}/devolver")

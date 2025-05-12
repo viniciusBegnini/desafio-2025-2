@@ -48,10 +48,10 @@ public class TMDBService {
             if (filme.has("release_date") && !filme.get("release_date").asText().isEmpty()) {
                 dataLancamento = LocalDate.parse(filme.get("release_date").asText());
             }
-            
+
             String posterPath = filme.has("poster_path") && !filme.get("poster_path").isNull()
-                ? filme.get("poster_path").asText()
-                : null;
+                    ? filme.get("poster_path").asText()
+                    : null;
 
             String titulo = filme.get("title").asText();
             String resumo = filme.has("overview") ? filme.get("overview").asText() : "";
@@ -62,7 +62,8 @@ public class TMDBService {
                 int filmeId = filme.get("id").asInt();
                 String urlIngles = baseUrl + "/movie/" + filmeId + "?language=en-US";
 
-                ResponseEntity<String> responseIngles = restTemplate.exchange(urlIngles, HttpMethod.GET, entity, String.class);
+                ResponseEntity<String> responseIngles = restTemplate.exchange(urlIngles, HttpMethod.GET, entity,
+                        String.class);
                 JsonNode jsonIngles = mapper.readTree(responseIngles.getBody());
 
                 resumo = jsonIngles.has("overview") ? jsonIngles.get("overview").asText() : "";
@@ -76,12 +77,11 @@ public class TMDBService {
             System.out.println("Filme buscado: " + titulo);
 
             return new TMDBFilmeDTO(
-                titulo,
-                resumo,
-                String.valueOf(filme.get("vote_average").asDouble()),
-                dataLancamento,
-                posterPath
-            );
+                    titulo,
+                    resumo,
+                    String.valueOf(filme.get("vote_average").asDouble()),
+                    dataLancamento,
+                    posterPath);
 
         } catch (Exception e) {
             System.out.println("Erro ao buscar filme da API: " + e.getMessage());
@@ -103,7 +103,7 @@ public class TMDBService {
             this.pontuacao = pontuacao;
             this.lancamento = lancamento;
             this.posterPath = posterPath;
-    }
+        }
     }
 
 }

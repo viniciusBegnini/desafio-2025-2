@@ -16,8 +16,8 @@ public class LoginController {
 
     @PostMapping("/login")
     public String processLogin(@RequestParam String username,
-                               @RequestParam String password,
-                               HttpSession session) {
+            @RequestParam String password,
+            HttpSession session) {
         if ("admin".equals(username) && "admin".equals(password)) {
             session.setAttribute("usuarioLogado", true);
             return "redirect:/home";

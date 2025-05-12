@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastrar Locação</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <div class="container mt-5">
+        <h2 class="mb-4 text-center">Nova Locação</h2>
+
+        <form method="post" th:action="@{/locacoes}" th:object="${locacao}" class="shadow p-4 bg-white rounded">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="nome" class="form-label">Nome do Cliente</label>
+                    <input type="text" class="form-control" name="nome" id="nome" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="cpf" class="form-label">CPF</label>
+                    <input type="text" class="form-control" id="cpf" name="cpf" maxlength="11" pattern="\d{11}"
+                        required>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="email" class="form-label">E-mail</label>
+                    <input type="email" class="form-control" name="email" id="email" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="telefone" class="form-label">Telefone</label>
+                    <input type="text" class="form-control" id="telefone" name="telefone" maxlength="11"
+                        pattern="\d{11}" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label>Selecione os Exemplares:</label>
+                <div class="form-check" th:each="exemplar : ${exemplares}">
+                    <input class="form-check-input" type="checkbox" th:id="${'exemplar' + exemplar.id}"
+                        th:name="exemplares" th:value="${exemplar.id}" />
+                    <label class="form-check-label" th:for="${'exemplar' + exemplar.id}"
+                        th:text="${exemplar.filme.titulo + ' (ID: ' + exemplar.id + ')'}"></label>
+                </div>
+            </div>
+
+
+            <div class="mb-3">
+                <label for="dataDevolucao" class="form-label">Data de Devolução</label>
+                <input type="date" class="form-control" name="dataDevolucao" id="dataDevolucao" required>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <a href="/home" class="btn btn-secondary">Voltar</a>
+                <button type="submit" class="btn btn-success">Cadastrar Locação</button>
+            </div>
+        </form>
+    </div>
+
+</body>
+
+</html>

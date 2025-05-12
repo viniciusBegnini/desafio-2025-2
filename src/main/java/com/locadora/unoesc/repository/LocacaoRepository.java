@@ -8,5 +8,6 @@ import java.util.List;
 
 public interface LocacaoRepository extends JpaRepository<Locacao, Long> {
     List<Locacao> findByCpfAndDataDevolvidoIsNull(String cpf);
+
     boolean existsByExemplaresAndDataDevolvidoIsNull(Exemplar exemplar);
 }

@@ -1,39 +1,40 @@
 <!DOCTYPE html>
 <html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <title>Editar Exemplar</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
+
 <body class="bg-light">
 
-<div class="container mt-4">
-    <h2 class="mb-4">Editar Exemplar</h2>
+    <div class="container mt-4">
+        <h2 class="mb-4">Editar Exemplar</h2>
 
-    <form th:action="@{'/exemplares/editar/' + ${exemplar.id}}" method="post">
-        <div class="mb-3">
-            <label for="filme">Filme</label>
-            <select class="form-control" name="filmeId" id="filme" required>
-                <option th:each="filme : ${filmes}" 
-                        th:value="${filme.id}" 
-                        th:text="${filme.titulo}" 
+        <form th:action="@{'/exemplares/editar/' + ${exemplar.id}}" method="post">
+            <div class="mb-3">
+                <label for="filme">Filme</label>
+                <select class="form-control" name="filmeId" id="filme" required>
+                    <option th:each="filme : ${filmes}" th:value="${filme.id}" th:text="${filme.titulo}"
                         th:selected="${filme.id == exemplar.filme.id}">
-                </option>
-            </select>
-        </div>
+                    </option>
+                </select>
+            </div>
 
-        <div class="mb-3">
-            <label for="ativo">Ativo</label>
-            <select class="form-control" id="ativo" name="ativo">
-                <option value="true" th:selected="${exemplar.ativo}">Sim</option>
-                <option value="false" th:selected="${!exemplar.ativo}">Não</option>
-            </select>
-        </div>
+            <div class="mb-3">
+                <label for="ativo">Ativo</label>
+                <select class="form-control" id="ativo" name="ativo">
+                    <option value="true" th:selected="${exemplar.ativo}">Sim</option>
+                    <option value="false" th:selected="${!exemplar.ativo}">Não</option>
+                </select>
+            </div>
 
-        <button type="submit" class="btn btn-success">Salvar Alterações</button>
-        <a href="/exemplares/listar" class="btn btn-secondary">Cancelar</a>
-    </form>
-</div>
+            <button type="submit" class="btn btn-success">Salvar Alterações</button>
+            <a href="/exemplares/listar" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
 
 </body>
+
 </html>
