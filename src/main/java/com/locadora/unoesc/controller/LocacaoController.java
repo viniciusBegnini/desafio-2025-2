@@ -54,6 +54,47 @@ public class LocacaoController {
         return mv;
     }
 
+    @GetMapping("/listar")
+    public ModelAndView listarComFiltro(
+            @RequestParam(required = false) String nome,
+            @RequestParam(required = false) String cpf,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String filme,
+            HttpSession session) {
+
+        if (session.getAttribute("usuarioLogado") == null) {
+            return new ModelAndView("redirect:/login");
+        }
+
+        List<Locacao> locacoes = locacaoRepository.findAll();
+
+        if (nome != null && !nome.isBlank()) {
+            locacoes = locacoes.stream()
+                    .filter(l -> l.getNome().toLowerCase().contains(nome.toLowerCase()))
+                    .toList();
+        }
+        if (cpf != null && !cpf.isBlank()) {
+            locacoes = locacoes.stream()
+                    .filter(l -> l.getCpf().contains(cpf))
+                    .toList();
+        }
+        if (email != null && !email.isBlank()) {
+            locacoes = locacoes.stream()
+                    .filter(l -> l.getEmail().toLowerCase().contains(email.toLowerCase()))
+                    .toList();
+        }
+        if (filme != null && !filme.isBlank()) {
+            locacoes = locacoes.stream()
+                    .filter(l -> l.getExemplares().stream()
+                            .anyMatch(e -> e.getFilme().getTitulo().toLowerCase().contains(filme.toLowerCase())))
+                    .toList();
+        }
+
+        ModelAndView mv = new ModelAndView("locacoes");
+        mv.addObject("locacoes", locacoes);
+        return mv;
+    }
+
     @PostMapping
     public Object salvarFormulario(
             @RequestParam String nome,
@@ -141,8 +182,7 @@ public class LocacaoController {
                 filmeRepository.save(filme);
             }
         }
-
-        return locacao;
+        return new ModelAndView("redirect:/locacoes/listar");
     }
 
     private String gerarQRCode(Locacao locacao) {

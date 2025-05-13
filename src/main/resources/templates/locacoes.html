@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Locações</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">Locações</h2>
+
+        <form class="row mb-4" method="get" action="/locacoes/listar">
+            <div class="col-md-3">
+                <input type="text" class="form-control" name="nome" placeholder="Nome">
+            </div>
+            <div class="col-md-2">
+                <input type="text" class="form-control" name="cpf" placeholder="CPF">
+            </div>
+            <div class="col-md-3">
+                <input type="text" class="form-control" name="email" placeholder="Email">
+            </div>
+            <div class="col-md-3">
+                <input type="text" class="form-control" name="filme" placeholder="Título do Filme">
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover shadow">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>CPF</th>
+                        <th>Email</th>
+                        <th>Telefone</th>
+                        <th>Filmes</th>
+                        <th>Locação</th>
+                        <th>Devolução Prevista</th>
+                        <th>Devolvido em</th>
+                        <th>QR Code</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="locacao : ${locacoes}"
+                        th:class="${locacao.dataDevolvido != null} ? 'table-success' : 'table-warning'">
+                        <td th:text="${locacao.id}">1</td>
+                        <td th:text="${locacao.nome}">Fulano</td>
+                        <td th:text="${locacao.cpf}">00000000000</td>
+                        <td th:text="${locacao.email}">email@exemplo.com</td>
+                        <td th:text="${locacao.telefone}">999999999</td>
+                        <td>
+                            <ul>
+                                <li th:each="ex : ${locacao.exemplares}" th:text="${ex.filme.titulo}">Filme</li>
+                            </ul>
+                        </td>
+                        <td th:text="${#temporals.format(locacao.dataLocacao, 'dd/MM/yyyy')}">01/01/2025</td>
+                        <td th:text="${#temporals.format(locacao.dataDevolucao, 'dd/MM/yyyy')}">07/01/2025</td>
+                        <td>
+                            <span th:if="${locacao.dataDevolvido != null}"
+                                th:text="${#temporals.format(locacao.dataDevolvido, 'dd/MM/yyyy')}"></span>
+                            <form th:if="${locacao.dataDevolvido == null}"
+                                th:action="@{'/locacoes/' + ${locacao.id} + '/devolver'}" method="post"
+                                onsubmit="return confirm('Confirmar devolução desta locação?')">
+                                <input type="hidden" name="_method" value="put" />
+                                <button type="submit" class="btn btn-sm btn-success">Marcar como Devolvido</button>
+                            </form>
+                        </td>
+                        <td>
+                            <img th:src="'data:image/png;base64,' + ${locacao.qrCode}" style="height: 100px;"
+                                alt="QR Code">
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="/home" class="btn btn-secondary">Voltar</a>
+        </div>
+    </div>
+
+</body>
+
+</html>
