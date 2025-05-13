@@ -101,7 +101,7 @@ public class LocacaoController {
             @RequestParam String cpf,
             @RequestParam String email,
             @RequestParam String telefone,
-            @RequestParam("exemplares") List<Long> exemplaresIds,
+            @RequestParam(value = "exemplares", required = false) List<Long> exemplaresIds,
             @RequestParam("dataDevolucao") String dataDevolucaoStr,
             HttpSession session) {
 
@@ -109,50 +109,61 @@ public class LocacaoController {
             return new ModelAndView("redirect:/login");
         }
 
-        if (exemplaresIds.size() < 1 || exemplaresIds.size() > 3) {
-            throw new RuntimeException("Você deve selecionar entre 1 e 3 exemplares.");
-        }
+        ModelAndView mv = new ModelAndView("cadastroLocacao");
+        mv.addObject("exemplares", exemplarRepository.findByAtivoTrue());
 
-        List<Exemplar> exemplares = exemplarRepository.findAllById(exemplaresIds);
-
-        for (Exemplar ex : exemplares) {
-            if (!ex.isAtivo()) {
-                throw new RuntimeException("Exemplar ID " + ex.getId() + " está inativo.");
+        try {
+            if (exemplaresIds == null || exemplaresIds.size() < 1 || exemplaresIds.size() > 3) {
+                mv.addObject("erro", "Você deve selecionar entre 1 e 3 exemplares.");
+                return mv;
             }
-        }
 
-        Locacao locacao = new Locacao();
-        locacao.setNome(nome);
-        locacao.setCpf(cpf);
-        locacao.setEmail(email);
-        locacao.setTelefone(telefone);
-        locacao.setDataLocacao(LocalDate.now());
-        locacao.setExemplares(exemplares);
-
-        LocalDate dataDevolucao = LocalDate.parse(dataDevolucaoStr);
-        if (dataDevolucao.isBefore(LocalDate.now())) {
-            throw new RuntimeException("A data de devolução não pode ser anterior à data de hoje.");
-        }
-        locacao.setDataDevolucao(dataDevolucao);
-
-        String qrCodeBase64 = gerarQRCode(locacao);
-        locacao.setQrCode(qrCodeBase64);
-
-        locacaoRepository.save(locacao);
-
-        for (Exemplar ex : exemplares) {
-            Filme filme = ex.getFilme();
-            if (filme != null) {
-                long ativos = exemplarRepository.countByFilmeAndAtivoTrue(filme);
-                filme.setExemplaresDisponiveis(ativos - 1);
-                filmeRepository.save(filme);
+            LocalDate dataDevolucao = LocalDate.parse(dataDevolucaoStr);
+            if (dataDevolucao.isBefore(LocalDate.now())) {
+                mv.addObject("erro", "A data de devolução não pode ser anterior à data de hoje.");
+                return mv;
             }
+
+            List<Exemplar> exemplares = exemplarRepository.findAllById(exemplaresIds);
+            for (Exemplar ex : exemplares) {
+                if (!ex.isAtivo()) {
+                    mv.addObject("erro", "Exemplar ID " + ex.getId() + " está inativo.");
+                    return mv;
+                }
+            }
+
+            Locacao locacao = new Locacao();
+            locacao.setNome(nome);
+            locacao.setCpf(cpf);
+            locacao.setEmail(email);
+            locacao.setTelefone(telefone);
+            locacao.setExemplares(exemplares);
+            locacao.setDataLocacao(LocalDate.now());
+            locacao.setDataDevolucao(dataDevolucao);
+            locacao.setQrCode(gerarQRCode(locacao));
+
+            locacaoRepository.save(locacao);
+
+            for (Exemplar ex : exemplares) {
+                ex.setAtivo(false);
+                exemplarRepository.save(ex);
+
+                Filme filme = ex.getFilme();
+                if (filme != null) {
+                    long ativos = exemplarRepository.countByFilmeAndAtivoTrue(filme);
+                    filme.setExemplaresDisponiveis(ativos);
+                    filmeRepository.save(filme);
+                }
+            }
+
+            ModelAndView sucesso = new ModelAndView("locacaoSucesso");
+            sucesso.addObject("qrCode", locacao.getQrCode());
+            return sucesso;
+
+        } catch (Exception e) {
+            mv.addObject("erro", "Erro ao salvar locação: " + e.getMessage());
+            return mv;
         }
-
-        ModelAndView mv = new ModelAndView("locacaoSucesso");
-        mv.addObject("qrCode", locacao.getQrCode());
-        return mv;
-
     }
 
     @PutMapping("/{id}/devolver")

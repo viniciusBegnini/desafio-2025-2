@@ -17,7 +17,7 @@
                 <input type="text" class="form-control" name="nome" placeholder="Nome">
             </div>
             <div class="col-md-2">
-                <input type="text" class="form-control" name="cpf" placeholder="CPF">
+                <input type="text" class="form-control" name="cpf" maxlength="11" pattern="\d{11}" placeholder="CPF" required oninput="this.value = this.value.replace(/\D/g, '')">
             </div>
             <div class="col-md-3">
                 <input type="text" class="form-control" name="email" placeholder="Email">
@@ -49,18 +49,18 @@
                 <tbody>
                     <tr th:each="locacao : ${locacoes}"
                         th:class="${locacao.dataDevolvido != null} ? 'table-success' : 'table-warning'">
-                        <td th:text="${locacao.id}">1</td>
-                        <td th:text="${locacao.nome}">Fulano</td>
-                        <td th:text="${locacao.cpf}">00000000000</td>
-                        <td th:text="${locacao.email}">email@exemplo.com</td>
-                        <td th:text="${locacao.telefone}">999999999</td>
+                        <td th:text="${locacao.id}"></td>
+                        <td th:text="${locacao.nome}"></td>
+                        <td th:text="${locacao.cpf}"></td>
+                        <td th:text="${locacao.email}"></td>
+                        <td th:text="${locacao.telefone}"></td>
                         <td>
                             <ul>
-                                <li th:each="ex : ${locacao.exemplares}" th:text="${ex.filme.titulo}">Filme</li>
+                                <li th:each="ex : ${locacao.exemplares}" th:text="${ex.filme.titulo}"></li>
                             </ul>
                         </td>
-                        <td th:text="${#temporals.format(locacao.dataLocacao, 'dd/MM/yyyy')}">01/01/2025</td>
-                        <td th:text="${#temporals.format(locacao.dataDevolucao, 'dd/MM/yyyy')}">07/01/2025</td>
+                        <td th:text="${#temporals.format(locacao.dataLocacao, 'dd/MM/yyyy')}"></td>
+                        <td th:text="${#temporals.format(locacao.dataDevolucao, 'dd/MM/yyyy')}"></td>
                         <td>
                             <span th:if="${locacao.dataDevolvido != null}"
                                 th:text="${#temporals.format(locacao.dataDevolvido, 'dd/MM/yyyy')}"></span>
