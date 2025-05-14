@@ -5,6 +5,8 @@ import com.locadora.unoesc.repository.FilmeRepository;
 import com.locadora.unoesc.service.TMDBService;
 import com.locadora.unoesc.service.TMDBService.TMDBFilmeDTO;
 import jakarta.servlet.http.HttpSession;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -56,7 +58,7 @@ public class FilmeController {
 
         Optional<Filme> existente = filmeRepository.findByTituloIgnoreCase(filme.getTitulo());
         if (existente.isPresent()) {
-            throw new RuntimeException("Já existe um filme cadastrado com este título.");
+            return ResponseEntity.badRequest().body("Já existe um filme cadastrado com este título.");
         }
 
         return filmeRepository.save(filme);

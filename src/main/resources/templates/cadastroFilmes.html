@@ -16,7 +16,7 @@
 <body class="bg-light">
 
     <div class="container py-5">
-        <h2 class="mb-4">Cadastrar Filme Manualmente</h2>
+        <h2 class="mb-4">Cadastrar Filme</h2>
 
         <div class="mb-3">
             <button id="buscarFilme" class="btn btn-info">Buscar Filme Aleatório</button>
@@ -72,6 +72,7 @@
         let filmeDados = null;
 
         document.getElementById("buscarFilme").addEventListener("click", function () {
+            document.getElementById("mensagem").innerHTML = "";
             fetch("/filmes/aleatorio")
                 .then(response => {
                     if (!response.ok) throw new Error("Erro ao buscar filme");
@@ -127,8 +128,20 @@
                 .then(data => {
                     document.getElementById("mensagem").innerHTML = `<div class="alert alert-success">Filme <strong>${data.titulo}</strong> cadastrado com sucesso!</div>`;
                 })
-                .catch(error => {
-                    document.getElementById("mensagem").innerHTML = `<div class="alert alert-danger">Erro: ${error.message}</div>`;
+                .catch(async error => {
+                    let mensagem = "Erro ao cadastrar filme.";
+                    if (error instanceof Response || error.status) {
+                        try {
+                            const texto = await error.text();
+                            mensagem = texto || mensagem;
+                        } catch (e) {
+                            mensagem = "Erro inesperado.";
+                        }
+                    } else if (error.message) {
+                        mensagem = error.message;
+                    }
+
+                    document.getElementById("mensagem").innerHTML = `<div class="alert alert-danger">${mensagem}</div>`;
                 });
         });
     </script>
