@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Consulta Pública de Locação</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+    <div class="container mt-5">
+        <h3 class="text-center mb-4">Consultar Locação Ativa por CPF</h3>
+
+        <form method="get" th:action="@{/locacoes/consulta-publica}" class="row justify-content-center">
+            <div class="col-md-4">
+                <input type="text" class="form-control" name="cpf" placeholder="Digite o CPF"
+                       pattern="\d{11}" maxlength="11" required oninput="this.value = this.value.replace(/\D/g, '')">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Consultar</button>
+            </div>
+        </form>
+
+        <div class="mt-4" th:if="${locacoes != null}">
+            <div th:if="${#lists.isEmpty(locacoes)}">
+                <p class="text-center text-danger">Nenhuma locação ativa encontrada para este CPF.</p>
+            </div>
+
+            <div class="table-responsive" th:if="${!#lists.isEmpty(locacoes)}">
+                <table class="table table-bordered table-hover shadow">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                            <th>Email</th>
+                            <th>Filmes</th>
+                            <th>Data Locação</th>
+                            <th>Data Agendada Devolução</th>
+                            <th>QR Code</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="loc : ${locacoes}">
+                            <td th:text="${loc.nome}"></td>
+                            <td th:text="${loc.telefone}"></td>
+                            <td th:text="${loc.email}"></td>
+                            <td>
+                                <ul>
+                                    <li th:each="ex : ${loc.exemplares}" th:text="${ex.filme.titulo}"></li>
+                                </ul>
+                            </td>
+                            <td th:text="${#temporals.format(loc.dataLocacao, 'dd/MM/yyyy')}"></td>
+                            <td th:text="${#temporals.format(loc.dataDevolucao, 'dd/MM/yyyy')}"></td>
+                            <td>
+                                <img th:src="'data:image/png;base64,' + ${loc.qrCode}" style="height: 100px;">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="text-center mt-3">
+            <a href="/login" class="btn btn-secondary">Voltar ao Login</a>
+        </div>
+    </div>
+</body>
+
+</html>

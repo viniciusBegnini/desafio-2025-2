@@ -223,11 +223,18 @@ public class LocacaoController {
         }
     }
 
-    @GetMapping("/consultar-locacao/{cpf}")
-    public List<Locacao> consultarLocacaoPorCpf(@PathVariable String cpf) {
-        if (cpf == null || cpf.length() < 11) {
-            throw new RuntimeException("CPF inválido.");
+    @GetMapping("/consulta-publica")
+    public ModelAndView mostrarConsulta(@RequestParam(required = false) String cpf) {
+        ModelAndView mv = new ModelAndView("consultaPublica");
+        if (cpf != null && !cpf.trim().isEmpty()) {
+            if (cpf.length() != 11 || !cpf.matches("\\d+")) {
+                mv.addObject("locacoes", List.of());
+                return mv;
+            }
+            List<Locacao> locacoes = locacaoRepository.findByCpfAndDataDevolvidoIsNull(cpf);
+            mv.addObject("locacoes", locacoes);
         }
-        return locacaoRepository.findByCpfAndDataDevolvidoIsNull(cpf);
+        return mv;
     }
+
 }
