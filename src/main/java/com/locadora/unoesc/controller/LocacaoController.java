@@ -130,6 +130,11 @@ public class LocacaoController {
                     mv.addObject("erro", "Exemplar ID " + ex.getId() + " está inativo.");
                     return mv;
                 }
+
+                if (locacaoRepository.existsByExemplaresAndDataDevolvidoIsNull(ex)) {
+                    mv.addObject("erro", "O exemplar ID " + ex.getId() + " já está em uma locação pendente.");
+                    return mv;
+                }
             }
 
             Locacao locacao = new Locacao();
@@ -145,13 +150,9 @@ public class LocacaoController {
             locacaoRepository.save(locacao);
 
             for (Exemplar ex : exemplares) {
-                ex.setAtivo(false);
-                exemplarRepository.save(ex);
-
                 Filme filme = ex.getFilme();
                 if (filme != null) {
-                    long ativos = exemplarRepository.countByFilmeAndAtivoTrue(filme);
-                    filme.setExemplaresDisponiveis(ativos);
+                    filme.setExemplaresDisponiveis(filme.getExemplaresDisponiveis() - 1);
                     filmeRepository.save(filme);
                 }
             }
@@ -188,8 +189,7 @@ public class LocacaoController {
                             "Exemplar com ID " + ex.getId() + " não encontrado ao atualizar contador."));
             Filme filme = exemplarCompleto.getFilme();
             if (filme != null) {
-                long totalAtivos = exemplarRepository.countByFilmeAndAtivoTrue(filme);
-                filme.setExemplaresDisponiveis(totalAtivos + 1);
+                filme.setExemplaresDisponiveis(filme.getExemplaresDisponiveis() + 1);
                 filmeRepository.save(filme);
             }
         }

@@ -3,6 +3,7 @@ package com.locadora.unoesc.controller;
 import com.locadora.unoesc.model.Exemplar;
 import com.locadora.unoesc.model.Filme;
 import com.locadora.unoesc.repository.ExemplarRepository;
+import com.locadora.unoesc.repository.LocacaoRepository;
 import com.locadora.unoesc.repository.FilmeRepository;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.*;
@@ -16,10 +17,13 @@ public class ExemplarController {
 
     private final ExemplarRepository exemplarRepository;
     private final FilmeRepository filmeRepository;
+    private final LocacaoRepository locacaoRepository;
 
-    public ExemplarController(ExemplarRepository exemplarRepository, FilmeRepository filmeRepository) {
+    public ExemplarController(ExemplarRepository exemplarRepository, FilmeRepository filmeRepository,
+            LocacaoRepository locacaoRepository) {
         this.exemplarRepository = exemplarRepository;
         this.filmeRepository = filmeRepository;
+        this.locacaoRepository = locacaoRepository;
     }
 
     @GetMapping
@@ -123,6 +127,15 @@ public class ExemplarController {
 
         Exemplar exemplar = exemplarRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Exemplar não encontrado"));
+
+        if (!ativo && locacaoRepository.existsByExemplaresAndDataDevolvidoIsNull(exemplar)) {
+            ModelAndView mv = new ModelAndView("editarExemplar");
+            mv.addObject("exemplar", exemplar);
+            mv.addObject("filmes", filmeRepository.findAll());
+            mv.addObject("erro", "Não é possível inativar este exemplar: há locações pendentes.");
+            return mv;
+        }
+        exemplar.setAtivo(ativo);
         exemplar.setFilme(filmeRepository.findById(filmeId)
                 .orElseThrow(() -> new RuntimeException("Filme não encontrado")));
         exemplar.setAtivo(ativo);

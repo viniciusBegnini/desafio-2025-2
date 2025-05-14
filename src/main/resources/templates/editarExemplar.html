@@ -33,6 +33,7 @@
             <button type="submit" class="btn btn-success">Salvar Alterações</button>
             <a href="/exemplares/listar" class="btn btn-secondary">Cancelar</a>
         </form>
+        <div th:if="${erro}" class="alert alert-danger text-center mt-3" th:text="${erro}"></div>
     </div>
 
 </body>
