@@ -113,6 +113,19 @@ public class LocacaoController {
         mv.addObject("exemplares", exemplarRepository.findByAtivoTrue());
 
         try {
+
+            cpf = cpf.replaceAll("[^0-9]", "");
+            telefone = telefone.replaceAll("[^0-9]", "");
+            if (cpf.length() != 11) {
+                mv.addObject("erro", "CPF inválido.");
+                return mv;
+            }
+
+            if (telefone.length() < 10 || telefone.length() > 11) {
+                mv.addObject("erro", "Número de telefone inválido.");
+                return mv;
+            }
+
             if (exemplaresIds == null || exemplaresIds.size() < 1 || exemplaresIds.size() > 3) {
                 mv.addObject("erro", "Você deve selecionar entre 1 e 3 exemplares.");
                 return mv;
@@ -227,8 +240,10 @@ public class LocacaoController {
     public ModelAndView mostrarConsulta(@RequestParam(required = false) String cpf) {
         ModelAndView mv = new ModelAndView("consultaPublica");
         if (cpf != null && !cpf.trim().isEmpty()) {
-            if (cpf.length() != 11 || !cpf.matches("\\d+")) {
+            cpf = cpf.replaceAll("[^0-9]", "");
+            if (cpf.length() != 11) {
                 mv.addObject("locacoes", List.of());
+                mv.addObject("erro", "CPF inválido. O CPF deve conter 11 números.");
                 return mv;
             }
             List<Locacao> locacoes = locacaoRepository.findByCpfAndDataDevolvidoIsNull(cpf);
