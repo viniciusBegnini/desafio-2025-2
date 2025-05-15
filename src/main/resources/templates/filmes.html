@@ -35,6 +35,10 @@
                         <p class="card-text small" th:text="${filme.resumo}"></p>
                         <a th:href="@{'/filmes/editar/' + ${filme.id}}"
                             class="btn btn-sm btn-outline-primary mt-auto">Editar</a>
+                        <button class="btn btn-sm btn-outline-danger mt-2" th:attr="data-id=${filme.id}"
+                            onclick="excluirFilme(this)">
+                            Excluir
+                        </button>
                     </div>
                 </div>
             </div>
@@ -50,5 +54,25 @@
     </div>
 
 </body>
+
+<script>
+    function excluirFilme(btn) {
+        const id = btn.getAttribute("data-id");
+        if (confirm("Tem certeza que deseja excluir este filme?")) {
+            fetch(`/filmes/${id}`, { method: "DELETE" })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(msg => { throw new Error(msg); });
+                    }
+                    alert("Filme excluído com sucesso.");
+                    location.reload();
+                })
+                .catch(error => {
+                    alert("Erro ao excluir filme: " + error.message);
+                });
+        }
+    }
+</script>
+
 
 </html>

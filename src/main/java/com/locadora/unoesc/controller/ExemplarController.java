@@ -6,6 +6,9 @@ import com.locadora.unoesc.repository.ExemplarRepository;
 import com.locadora.unoesc.repository.LocacaoRepository;
 import com.locadora.unoesc.repository.FilmeRepository;
 import jakarta.servlet.http.HttpSession;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -148,4 +151,27 @@ public class ExemplarController {
         return new ModelAndView("redirect:/exemplares/listar");
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> excluirExemplar(@PathVariable Long id, HttpSession session) {
+        if (session.getAttribute("usuarioLogado") == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        Exemplar exemplar = exemplarRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Exemplar não encontrado."));
+
+        boolean possuiLocacoes = locacaoRepository.existsByExemplaresContaining(exemplar);
+        if (possuiLocacoes) {
+            return ResponseEntity.badRequest()
+                    .body("Não é possível excluir este exemplar pois já foi associado a uma locação.");
+        }
+
+        Filme filme = exemplar.getFilme();
+        exemplarRepository.delete(exemplar);
+        long totalAtivos = exemplarRepository.countByFilmeAndAtivoTrue(filme);
+        filme.setExemplaresDisponiveis(totalAtivos);
+        filmeRepository.save(filme);
+
+        return ResponseEntity.ok().body("Exemplar excluído com sucesso.");
+    }
 }

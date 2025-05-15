@@ -2,10 +2,12 @@ package com.locadora.unoesc.controller;
 
 import com.locadora.unoesc.model.Filme;
 import com.locadora.unoesc.repository.FilmeRepository;
+import com.locadora.unoesc.repository.ExemplarRepository;
 import com.locadora.unoesc.service.TMDBService;
 import com.locadora.unoesc.service.TMDBService.TMDBFilmeDTO;
 import jakarta.servlet.http.HttpSession;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
@@ -17,10 +19,12 @@ import java.util.Optional;
 public class FilmeController {
 
     private final FilmeRepository filmeRepository;
+    private final ExemplarRepository exemplarRepository;
     private final TMDBService tmdbService;
 
-    public FilmeController(FilmeRepository filmeRepository, TMDBService tmdbService) {
+    public FilmeController(FilmeRepository filmeRepository, ExemplarRepository exemplarRepository, TMDBService tmdbService) {
         this.filmeRepository = filmeRepository;
+        this.exemplarRepository = exemplarRepository;
         this.tmdbService = tmdbService;
     }
 
@@ -116,4 +120,23 @@ public class FilmeController {
         filmeRepository.save(filme);
         return new ModelAndView("redirect:/filmes/listar");
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> excluirFilme(@PathVariable Long id, HttpSession session) {
+        if (session.getAttribute("usuarioLogado") == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        Filme filme = filmeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Filme não encontrado."));
+
+        if (!exemplarRepository.findByFilme(filme).isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body("Não é possível excluir este filme pois possui exemplares associados.");
+        }
+
+        filmeRepository.delete(filme);
+        return ResponseEntity.ok().body("Filme excluído com sucesso.");
+    }
+
 }

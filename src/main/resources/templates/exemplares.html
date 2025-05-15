@@ -38,6 +38,10 @@
                                 <a th:href="@{'/exemplares/editar/' + ${exemplar.id}}" class="btn btn-sm btn-primary">
                                     Editar
                                 </a>
+                                <button class="btn btn-sm btn-danger ms-2" th:attr="data-id=${exemplar.id}"
+                                    onclick="excluirExemplar(this)">
+                                    Excluir
+                                </button>
                             </td>
                         </tr>
                     </tbody>
@@ -52,5 +56,24 @@
     </div>
 
 </body>
+
+<script>
+    function excluirExemplar(btn) {
+        const id = btn.getAttribute("data-id");
+        if (confirm("Tem certeza que deseja excluir este exemplar?")) {
+            fetch(`/exemplares/${id}`, { method: "DELETE" })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(msg => { throw new Error(msg); });
+                    }
+                    alert("Exemplar excluído com sucesso.");
+                    location.reload();
+                })
+                .catch(error => {
+                    alert("Erro ao excluir exemplar: " + error.message);
+                });
+        }
+    }
+</script>
 
 </html>
