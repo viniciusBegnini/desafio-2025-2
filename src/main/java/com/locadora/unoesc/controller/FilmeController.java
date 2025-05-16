@@ -22,7 +22,8 @@ public class FilmeController {
     private final ExemplarRepository exemplarRepository;
     private final TMDBService tmdbService;
 
-    public FilmeController(FilmeRepository filmeRepository, ExemplarRepository exemplarRepository, TMDBService tmdbService) {
+    public FilmeController(FilmeRepository filmeRepository, ExemplarRepository exemplarRepository,
+            TMDBService tmdbService) {
         this.filmeRepository = filmeRepository;
         this.exemplarRepository = exemplarRepository;
         this.tmdbService = tmdbService;
@@ -99,6 +100,7 @@ public class FilmeController {
             @RequestParam boolean ativo,
             @RequestParam(required = false) Long exemplaresDisponiveis,
             HttpSession session) {
+
         if (session.getAttribute("usuarioLogado") == null) {
             return new ModelAndView("redirect:/login");
         }
@@ -106,10 +108,17 @@ public class FilmeController {
         Filme filme = filmeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Filme não encontrado"));
 
+        if (!ativo && !exemplarRepository.findByFilme(filme).isEmpty()) {
+            ModelAndView mv = new ModelAndView("editarFilme");
+            mv.addObject("filme", filme);
+            mv.addObject("erro", "Não é possível inativar o filme pois ele possui exemplares associados.");
+            return mv;
+        }
+
         filme.setAtivo(ativo);
         filme.setExemplaresDisponiveis(exemplaresDisponiveis);
-
         filmeRepository.save(filme);
+
         return new ModelAndView("redirect:/filmes/listar");
     }
 

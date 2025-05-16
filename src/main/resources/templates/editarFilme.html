@@ -56,6 +56,7 @@
                 <button type="submit" class="btn btn-primary">Salvar Alterações</button>
                 <a href="/filmes/listar" class="btn btn-secondary">Cancelar</a>
             </div>
+            <div th:if="${erro}" class="alert alert-danger text-center mt-3" th:text="${erro}"></div>
         </form>
     </div>
 </body>
