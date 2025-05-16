@@ -1,7 +1,6 @@
 package com.locadora.unoesc.controller;
 
 import jakarta.servlet.http.HttpSession;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

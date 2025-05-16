@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
-
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -33,14 +32,6 @@ public class LocacaoController {
         this.locacaoRepository = locacaoRepository;
         this.exemplarRepository = exemplarRepository;
         this.filmeRepository = filmeRepository;
-    }
-
-    @GetMapping
-    public Object listar(HttpSession session) {
-        if (session.getAttribute("usuarioLogado") == null) {
-            return new ModelAndView("redirect:/login");
-        }
-        return locacaoRepository.findAll();
     }
 
     @GetMapping("/cadastrar")
@@ -64,6 +55,7 @@ public class LocacaoController {
 
         if (busca != null && !busca.isBlank()) {
             String termo = busca.toLowerCase();
+
             locacoes = locacoes.stream().filter(l -> l.getNome().toLowerCase().contains(termo) ||
                     l.getCpf().contains(termo) ||
                     l.getEmail().toLowerCase().contains(termo) ||

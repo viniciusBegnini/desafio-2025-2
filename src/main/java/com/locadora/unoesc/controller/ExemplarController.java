@@ -6,12 +6,10 @@ import com.locadora.unoesc.repository.ExemplarRepository;
 import com.locadora.unoesc.repository.LocacaoRepository;
 import com.locadora.unoesc.repository.FilmeRepository;
 import jakarta.servlet.http.HttpSession;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
-
 import java.time.LocalDate;
 
 @RestController
@@ -27,14 +25,6 @@ public class ExemplarController {
         this.exemplarRepository = exemplarRepository;
         this.filmeRepository = filmeRepository;
         this.locacaoRepository = locacaoRepository;
-    }
-
-    @GetMapping
-    public Object listar(HttpSession session) {
-        if (session.getAttribute("usuarioLogado") == null) {
-            return new ModelAndView("redirect:/login");
-        }
-        return exemplarRepository.findAll();
     }
 
     @GetMapping("/cadastrar")
@@ -111,6 +101,7 @@ public class ExemplarController {
         if (session.getAttribute("usuarioLogado") == null) {
             return new ModelAndView("redirect:/login");
         }
+
         Exemplar exemplar = exemplarRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Exemplar não encontrado"));
         ModelAndView mv = new ModelAndView("editarExemplar");
@@ -129,7 +120,11 @@ public class ExemplarController {
         }
 
         Exemplar exemplar = exemplarRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Exemplar não encontrado"));
+                .orElseThrow(() -> new RuntimeException("Exemplar não encontrado."));
+
+        Filme filme = filmeRepository.findById(filmeId)
+                .orElseThrow(() -> new RuntimeException("Filme não encontrado."));
+        exemplar.setFilme(filme);
 
         if (!ativo && locacaoRepository.existsByExemplaresAndDataDevolvidoIsNull(exemplar)) {
             ModelAndView mv = new ModelAndView("editarExemplar");
@@ -138,16 +133,14 @@ public class ExemplarController {
             mv.addObject("erro", "Não é possível inativar este exemplar: há locações pendentes.");
             return mv;
         }
-        exemplar.setAtivo(ativo);
-        exemplar.setFilme(filmeRepository.findById(filmeId)
-                .orElseThrow(() -> new RuntimeException("Filme não encontrado")));
+
         exemplar.setAtivo(ativo);
         exemplarRepository.save(exemplar);
 
-        Filme filme = exemplar.getFilme();
         long ativos = exemplarRepository.countByFilmeAndAtivoTrue(filme);
         filme.setExemplaresDisponiveis(ativos);
         filmeRepository.save(filme);
+
         return new ModelAndView("redirect:/exemplares/listar");
     }
 
@@ -168,6 +161,7 @@ public class ExemplarController {
 
         Filme filme = exemplar.getFilme();
         exemplarRepository.delete(exemplar);
+        
         long totalAtivos = exemplarRepository.countByFilmeAndAtivoTrue(filme);
         filme.setExemplaresDisponiveis(totalAtivos);
         filmeRepository.save(filme);

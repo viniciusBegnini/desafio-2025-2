@@ -28,14 +28,6 @@ public class FilmeController {
         this.tmdbService = tmdbService;
     }
 
-    @GetMapping
-    public Object listar(HttpSession session) {
-        if (session.getAttribute("usuarioLogado") == null) {
-            return new ModelAndView("redirect:/login");
-        }
-        return filmeRepository.findAll();
-    }
-
     @GetMapping("/cadastrar")
     public ModelAndView exibirFormulario(HttpSession session) {
         if (session.getAttribute("usuarioLogado") == null) {
