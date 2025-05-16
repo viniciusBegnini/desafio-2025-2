@@ -1,12 +1,17 @@
 package com.locadora.unoesc.controller;
 
 import jakarta.servlet.http.HttpSession;
+
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
 public class LoginController {
+
+    private static final String USUARIO = "admin";
+    private static final String SENHA_HASH = "$2b$12$YEuHbuk5gDugPZLqoUDaEOkZAibJeiPwgYcRl09SismRxHPAl.laO";
 
     @GetMapping("/login")
     public String showLoginForm(@RequestParam(required = false) String error, Model model) {
@@ -15,14 +20,12 @@ public class LoginController {
     }
 
     @PostMapping("/login")
-    public String processLogin(@RequestParam String username,
-            @RequestParam String password,
-            HttpSession session) {
-        if ("admin".equals(username) && "admin".equals(password)) {
+    public String login(@RequestParam String username, @RequestParam String password, HttpSession session) {
+        if (username.equals(USUARIO) && new BCryptPasswordEncoder().matches(password, SENHA_HASH)) {
             session.setAttribute("usuarioLogado", true);
             return "redirect:/home";
         } else {
-            return "redirect:/login?error=true";
+            return "redirect:/login?erro";
         }
     }
 
