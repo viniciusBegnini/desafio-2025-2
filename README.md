@@ -58,9 +58,11 @@ O sistema está protegido por uma tela de login fixa. Para acessar utilize as cr
 ### Passos
 
 1. Clone o repositório:
-   
+
+   ```
    git clone https://github.com/viniciusBegnini/desafio-2025-2
-   
+   ```
+
 2. Crie o banco de dados MySQL:
 
    ```sql
@@ -77,13 +79,15 @@ O sistema está protegido por uma tela de login fixa. Para acessar utilize as cr
 
 4. Rode o projeto com:
    
+   ```
    ./mvnw spring-boot:run
-   
+   ```
 
 5. Acesse no navegador:
    
+   ```
    http://localhost:8080/login
-
+   ```
 
 ---
 
