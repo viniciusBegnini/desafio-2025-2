@@ -60,7 +60,7 @@ O sistema está protegido por uma tela de login fixa. Para acessar utilize as cr
 1. Clone o repositório:
 
    ```
-   git clone https://github.com/viniciusBegnini/desafio-2025-2
+   git clone --branch desenvolvimento https://github.com/seu-usuario/seu-repositorio.git
    ```
 
 2. Crie o banco de dados MySQL:
