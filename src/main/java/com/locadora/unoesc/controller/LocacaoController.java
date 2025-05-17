@@ -34,6 +34,13 @@ public class LocacaoController {
         this.filmeRepository = filmeRepository;
     }
 
+    private List<Exemplar> buscarExemplaresDisponiveis() {
+        List<Exemplar> ativos = exemplarRepository.findByAtivoTrue();
+        return ativos.stream()
+                .filter(ex -> !locacaoRepository.existsByExemplaresAndDataDevolvidoIsNull(ex))
+                .toList();
+    }
+
     @GetMapping("/cadastrar")
     public ModelAndView exibirFormularioLocacao(HttpSession session) {
         if (session.getAttribute("usuarioLogado") == null) {
@@ -41,7 +48,7 @@ public class LocacaoController {
         }
 
         ModelAndView mv = new ModelAndView("cadastroLocacao");
-        mv.addObject("exemplares", exemplarRepository.findByAtivoTrue());
+        mv.addObject("exemplares", buscarExemplaresDisponiveis());
         return mv;
     }
 
@@ -83,7 +90,7 @@ public class LocacaoController {
         }
 
         ModelAndView mv = new ModelAndView("cadastroLocacao");
-        mv.addObject("exemplares", exemplarRepository.findByAtivoTrue());
+        mv.addObject("exemplares", buscarExemplaresDisponiveis());
 
         try {
 
